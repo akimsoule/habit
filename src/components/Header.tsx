@@ -1,5 +1,6 @@
 import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ThemeToggle from "./ThemeToggle";
 
 const Header = () => {
   return (
@@ -14,10 +15,13 @@ const Header = () => {
             <h1 className="text-xl font-bold text-foreground">MyHabits</h1>
           </div>
 
-          {/* Profile Button */}
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <User className="h-5 w-5" />
-          </Button>
+          {/* Theme Toggle & Profile */}
+          <div className="flex items-center space-x-2">
+            <ThemeToggle />
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <User className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </div>
     </header>

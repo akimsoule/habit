@@ -1,19 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Trophy, Star } from "lucide-react";
+import confetti from 'canvas-confetti';
 
 interface HabitCardProps {
   name: string;
   initialProgress: number;
+  onProgressUpdate?: (newProgress: number) => void;
 }
 
-const HabitCard = ({ name, initialProgress }: HabitCardProps) => {
+const HabitCard = ({ name, initialProgress, onProgressUpdate }: HabitCardProps) => {
   const [progress, setProgress] = useState(initialProgress);
+  const [isCompleted, setIsCompleted] = useState(initialProgress >= 100);
+  const [showCelebration, setShowCelebration] = useState(false);
+
+  useEffect(() => {
+    if (progress >= 100 && !isCompleted) {
+      setIsCompleted(true);
+      setShowCelebration(true);
+      
+      // Confetti celebration
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#10b981', '#3b82f6', '#8b5cf6']
+      });
+      
+      // Remove celebration animation after it completes
+      setTimeout(() => setShowCelebration(false), 600);
+    }
+  }, [progress, isCompleted]);
 
   const handleProgressIncrease = () => {
-    setProgress(prev => Math.min(prev + 10, 100));
+    const newProgress = Math.min(progress + 10, 100);
+    setProgress(newProgress);
+    onProgressUpdate?.(newProgress);
   };
 
   const getProgressColor = (value: number) => {
@@ -23,11 +48,19 @@ const HabitCard = ({ name, initialProgress }: HabitCardProps) => {
   };
 
   return (
-    <Card className="habit-card h-full">
+    <Card className={`habit-card h-full ${showCelebration ? 'celebration-bounce' : ''}`}>
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold text-card-foreground">
-          {name}
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-semibold text-card-foreground">
+            {name}
+          </CardTitle>
+          {isCompleted && (
+            <Badge variant="secondary" className="bg-success/10 text-success border-success/20 badge-pulse">
+              <Trophy className="h-3 w-3 mr-1" />
+              Complété
+            </Badge>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
@@ -37,7 +70,7 @@ const HabitCard = ({ name, initialProgress }: HabitCardProps) => {
               {progress}%
             </span>
           </div>
-          <Progress value={progress} className="h-3" />
+          <Progress value={progress} className="h-3 progress-indicator" />
         </div>
         
         <Button

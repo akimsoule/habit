@@ -3,6 +3,8 @@ import Header from "@/components/Header";
 import HabitCard from "@/components/HabitCard";
 import FloatingAddButton from "@/components/FloatingAddButton";
 import StatsOverview from "@/components/StatsOverview";
+import ProgressChart from "@/components/ProgressChart";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
 interface Habit {
@@ -20,6 +22,12 @@ const Index = () => {
     { id: "4", name: "Meditate", progress: 20 },
     { id: "5", name: "Learn a new language", progress: 60 },
   ]);
+
+  const handleProgressUpdate = (habitId: string, newProgress: number) => {
+    setHabits(prev => prev.map(habit => 
+      habit.id === habitId ? { ...habit, progress: newProgress } : habit
+    ));
+  };
 
   const handleAddHabit = () => {
     const habitNames = [
@@ -75,6 +83,16 @@ const Index = () => {
             averageProgress={averageProgress}
           />
 
+          {/* Progress Chart */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Progression cette semaine</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProgressChart habits={habits} />
+            </CardContent>
+          </Card>
+
           {/* Habits Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {habits.map((habit) => (
@@ -82,6 +100,7 @@ const Index = () => {
                 key={habit.id}
                 name={habit.name}
                 initialProgress={habit.progress}
+                onProgressUpdate={(newProgress) => handleProgressUpdate(habit.id, newProgress)}
               />
             ))}
           </div>

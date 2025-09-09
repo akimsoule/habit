@@ -81,33 +81,39 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 215 28% 10%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 215 28% 12%;
     --card-foreground: 210 40% 98%;
+    --card-hover: 215 28% 14%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 215 28% 12%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 217 91% 55%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --success: 158 64% 52%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 158 64% 15%;
+
+    --secondary: 215 28% 18%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 215 28% 18%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 215 28% 18%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 215 28% 18%;
+    --input: 215 28% 18%;
+    --ring: 217 91% 60%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -167,5 +173,31 @@
   .btn-success {
     background: var(--gradient-success);
     @apply shadow-lg transition-all duration-200 hover:scale-105;
+  }
+
+  /* Celebration animations */
+  @keyframes bounce-celebration {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0) scale(1); }
+    40% { transform: translateY(-10px) scale(1.1); }
+    60% { transform: translateY(-5px) scale(1.05); }
+  }
+
+  @keyframes pulse-badge {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .celebration-bounce {
+    animation: bounce-celebration 0.6s ease-out;
+  }
+
+  .badge-pulse {
+    animation: pulse-badge 0.5s ease-out;
+  }
+
+  /* Progress bar smooth transition */
+  .progress-indicator {
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
