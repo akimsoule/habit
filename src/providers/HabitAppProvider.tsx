@@ -191,68 +191,7 @@ export const HabitAppProvider: React.FC<{ children: React.ReactNode }> = ({
     if (hw.setCategory) {
       hw.setCategory(category);
     } else {
-      // Fallback: recreate habit with new category preserving state
-      type HabitIntrospect = { description?: string; daysOfWeek?: number[]; dayOfMonth?: number };
-      const desc = (habit as unknown as HabitIntrospect).description;
-      const freq = habit.frequency as Frequency;
-      const prio = habit.priority as Priority;
-      const daysOfWeek = (habit as unknown as HabitIntrospect).daysOfWeek;
-      const dayOfMonth = (habit as unknown as HabitIntrospect).dayOfMonth;
-      const completions = habit.getCompletionHistory?.() ?? [];
-      // remove and recreate is not trivial without direct remove; rebuild minimal state:
-      const cats = manager.getAllCategories();
-      const habits = manager.getAllHabits({ includeArchived: true }).filter((h) => h.id !== habitId);
-      const goals = manager.getAllGoals();
-      repoRef.current = new InMemoryHabitRepository();
-      notifierRef.current = new NotificationService();
-      managerRef.current = new HabitManager(repoRef.current, notifierRef.current);
-      const mgr = managerRef.current;
-      for (const c of cats)
-        mgr.addCategory(
-          new Category(c.id, c.name, (c as unknown as { description?: string }).description)
-        );
-      const catsMap = new Map(mgr.getAllCategories().map((c) => [c.id, c]));
-      for (const h of habits) {
-        const nh = mgr.createHabit({
-          id: h.id,
-          name: h.name,
-          frequency: h.frequency as Frequency,
-          category: h.category?.id ? catsMap.get(h.category.id) : undefined,
-          priority: h.priority,
-          description: (h as unknown as { description?: string }).description,
-        });
-        if ((h as unknown as HabitIntrospect).daysOfWeek && nh.setDaysOfWeek)
-          nh.setDaysOfWeek((h as unknown as HabitIntrospect).daysOfWeek!);
-        if ((h as unknown as HabitIntrospect).dayOfMonth && nh.setDayOfMonth)
-          nh.setDayOfMonth((h as unknown as HabitIntrospect).dayOfMonth!);
-        for (const d of h.getCompletionHistory?.() ?? []) nh.markAsCompleted(d);
-      }
-      // recreate current habit with new category
-      const nh = mgr.createHabit({
-        id: habitId,
-        name: habit.name,
-        frequency: freq,
-        category: categoryId ? catsMap.get(categoryId) : undefined,
-        priority: prio,
-        description: desc,
-      });
-      if (daysOfWeek && nh.setDaysOfWeek) nh.setDaysOfWeek(daysOfWeek);
-      if (dayOfMonth && nh.setDayOfMonth) nh.setDayOfMonth(dayOfMonth);
-      for (const d of completions) nh.markAsCompleted(d);
-      // re-add goals as-is
-      for (const g of goals) {
-        type GoalIntrospect = { description?: string; dueDate?: string };
-        mgr.addGoal(
-          new GoalSmart(
-            g.id,
-            g.name,
-            g.getHabits?.() ?? [],
-            g.priority,
-            (g as unknown as GoalIntrospect).description,
-            (g as unknown as GoalIntrospect).dueDate
-          )
-        );
-      }
+      console.warn("[HabitApp] setCategory non supporté par Habit, aucune action effectuée.");
     }
     storage.saveFrom(managerRef.current!, repoRef.current!);
     bump();
@@ -267,66 +206,97 @@ export const HabitAppProvider: React.FC<{ children: React.ReactNode }> = ({
     if (gw.addHabit) {
       gw.addHabit(habit);
     } else {
-      // Fallback: recreate goal with added habit
-      const list = goal.getHabits?.() ?? [];
-      if (!list.find((h) => h.id === habitId)) list.push(habit);
-      type GoalIntrospect = { description?: string; dueDate?: string };
-      const ng = new GoalSmart(
-        goal.id,
-        goal.name,
-        list,
-        goal.priority,
-        (goal as unknown as GoalIntrospect).description,
-        (goal as unknown as GoalIntrospect).dueDate
-      );
-      // Replace by rebuilding goals minimally
-      const all = manager.getAllGoals().filter((g) => g.id !== goal.id);
-      // simple rebuild without touching categories/habits
-      // create new manager to replace goals list
-      const cats = manager.getAllCategories();
-      const habits = manager.getAllHabits({ includeArchived: true });
-      repoRef.current = new InMemoryHabitRepository();
-      notifierRef.current = new NotificationService();
-      managerRef.current = new HabitManager(repoRef.current, notifierRef.current);
-      const mgr = managerRef.current;
-      for (const c of cats)
-        mgr.addCategory(
-          new Category(c.id, c.name, (c as unknown as { description?: string }).description)
-        );
-      const catsMap = new Map(mgr.getAllCategories().map((c) => [c.id, c]));
-      for (const h of habits) {
-        type HabitIntrospect = { description?: string; daysOfWeek?: number[]; dayOfMonth?: number };
-        const nh = mgr.createHabit({
-          id: h.id,
-          name: h.name,
-          frequency: h.frequency as Frequency,
-          category: h.category?.id ? catsMap.get(h.category.id) : undefined,
-          priority: h.priority,
-          description: (h as unknown as HabitIntrospect).description,
-        });
-        if ((h as unknown as HabitIntrospect).daysOfWeek && nh.setDaysOfWeek)
-          nh.setDaysOfWeek((h as unknown as HabitIntrospect).daysOfWeek!);
-        if ((h as unknown as HabitIntrospect).dayOfMonth && nh.setDayOfMonth)
-          nh.setDayOfMonth((h as unknown as HabitIntrospect).dayOfMonth!);
-        for (const d of h.getCompletionHistory?.() ?? []) nh.markAsCompleted(d);
-      }
-      for (const g of all) {
-        type GoalIntrospect = { description?: string; dueDate?: string };
-        mgr.addGoal(
-          new GoalSmart(
-            g.id,
-            g.name,
-            g.getHabits?.() ?? [],
-            g.priority,
-            (g as unknown as GoalIntrospect).description,
-            (g as unknown as GoalIntrospect).dueDate
-          )
-        );
-      }
-      mgr.addGoal(ng);
+      console.warn("[HabitApp] addHabit non supporté par GoalSmart, aucune action effectuée.");
     }
     storage.saveFrom(managerRef.current!, repoRef.current!);
     bump();
+  };
+
+  const renameHabit = (habitId: string, name: string) => {
+    const h = manager.getHabit(habitId);
+    if (!h) return;
+    type WithRename = Habit & { renameHabit?: (n: string) => void };
+    if ((h as WithRename).renameHabit) {
+      (h as WithRename).renameHabit!(name);
+    } else {
+      // Fallback minimal si API absente
+      (h as unknown as { name: string }).name = name;
+    }
+    saveSnapshot();
+    bump();
+  };
+
+  const setHabitDescription = (habitId: string, description?: string) => {
+    const h = manager.getHabit(habitId);
+    if (!h) return;
+    type WithSetDesc = Habit & { setDescription?: (d?: string) => void };
+    if ((h as WithSetDesc).setDescription) (h as WithSetDesc).setDescription!(description);
+    saveSnapshot();
+    bump();
+  };
+
+  const setHabitWeeklyDays = (habitId: string, days: number[]) => {
+    const h = manager.getHabit(habitId);
+    if (!h) return;
+    type WithWeekly = Habit & { setDaysOfWeek?: (d: number[]) => void };
+    if ((h as WithWeekly).setDaysOfWeek) (h as WithWeekly).setDaysOfWeek!(days);
+    saveSnapshot();
+    bump();
+  };
+
+  const setHabitMonthlyDay = (habitId: string, day: number) => {
+    const h = manager.getHabit(habitId);
+    if (!h) return;
+    type WithMonthly = Habit & { setDayOfMonth?: (d: number) => void };
+    if ((h as WithMonthly).setDayOfMonth) (h as WithMonthly).setDayOfMonth!(day);
+    saveSnapshot();
+    bump();
+  };
+
+  const archiveHabit = (habitId: string) => {
+    const h = manager.getHabit(habitId);
+    if (!h) return;
+    type WithArchive = Habit & { archive?: () => void };
+    if ((h as WithArchive).archive) (h as WithArchive).archive!();
+    saveSnapshot();
+    bump();
+  };
+
+  const unarchiveHabit = (habitId: string) => {
+    const h = manager.getHabit(habitId);
+    if (!h) return;
+    type WithUnarchive = Habit & { unarchive?: () => void };
+    if ((h as WithUnarchive).unarchive) (h as WithUnarchive).unarchive!();
+    saveSnapshot();
+    bump();
+  };
+
+  const removeHabit = (habitId: string) => {
+    const h = manager.getHabit(habitId);
+    if (!h) return;
+    // API repo expose deleteHabit côté bas niveau
+    (repo as unknown as { deleteHabit?: (id: string) => void }).deleteHabit?.(habitId);
+    // Retirer la référence de tous les objectifs
+    for (const g of manager.getAllGoals()) {
+      type GoalWithRemove = GoalSmart & { removeHabit?: (id: string) => void };
+      (g as GoalWithRemove).removeHabit?.(habitId);
+    }
+    saveSnapshot();
+    bump();
+  };
+
+  const nextAvailableDate = (habitId: string, fromISO?: string) => {
+    const h = manager.getHabit(habitId);
+    if (!h || !h.isDueOn) return undefined;
+    const start = fromISO ?? new Date().toISOString().slice(0, 10);
+    // Cherche sur 60 jours max
+    for (let i = 0; i < 60; i++) {
+      const d = new Date(start);
+      d.setDate(d.getDate() + i + 1); // prochaine dispo strictement après start
+      const iso = d.toISOString().slice(0, 10);
+      if (h.isDueOn(iso)) return iso;
+    }
+    return undefined;
   };
 
   const removeGoal = (goalId: string) => {
@@ -434,6 +404,14 @@ export const HabitAppProvider: React.FC<{ children: React.ReactNode }> = ({
       removeGoal,
   setHabitCategory,
   addHabitToGoal,
+  renameHabit,
+  setHabitDescription,
+  setHabitWeeklyDays,
+  setHabitMonthlyDay,
+  archiveHabit,
+  unarchiveHabit,
+  removeHabit,
+  nextAvailableDate,
       saveSnapshot,
       requestNotifications,
   sendReminders,

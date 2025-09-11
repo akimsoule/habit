@@ -44,6 +44,22 @@ export type HabitAppContextValue = {
   setHabitCategory: (habitId: string, categoryId?: string) => void;
   /** Ajoute une habitude à un objectif existant */
   addHabitToGoal: (goalId: string, habitId: string) => void;
+  /** Renomme une habitude */
+  renameHabit: (habitId: string, name: string) => void;
+  /** Met à jour la description d'une habitude */
+  setHabitDescription: (habitId: string, description?: string) => void;
+  /** Définit les jours actifs pour une habitude hebdomadaire */
+  setHabitWeeklyDays: (habitId: string, days: number[]) => void;
+  /** Définit le jour du mois pour une habitude mensuelle */
+  setHabitMonthlyDay: (habitId: string, day: number) => void;
+  /** Archive une habitude */
+  archiveHabit: (habitId: string) => void;
+  /** Désarchive une habitude */
+  unarchiveHabit: (habitId: string) => void;
+  /** Supprime une habitude (et la retire des objectifs) */
+  removeHabit: (habitId: string) => void;
+  /** Calcule la prochaine date disponible (due) à partir d'une date de référence (incluant le lendemain) */
+  nextAvailableDate: (habitId: string, fromISO?: string) => string | undefined;
   /**
    * Réinitialise toutes les données de l'application stockées en local.
    * Supprime les clés localStorage commençant par "habit.app." et

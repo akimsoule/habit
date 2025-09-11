@@ -52,10 +52,35 @@ const Index = () => {
   const [notifyOnLoad, setNotifyOnLoad] = useState<boolean>(
     () => localStorage.getItem("habit.app.notifyOnLoad") === "1"
   );
-  // Heure de rappel quotidien (HH:MM, 24h)
-  const [notifyTime, setNotifyTime] = useState<string>(
-    () => localStorage.getItem("habit.app.notifyTime") || "06:30"
-  );
+  // Heures de rappel quotidiennes (HH:MM, 24h)
+  const [notifyTimes, setNotifyTimes] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem("habit.app.notifyTimes");
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr) && arr.every((t) => typeof t === "string"))
+          return arr;
+      }
+      const single = localStorage.getItem("habit.app.notifyTime");
+      return [single || "06:30"]; // rétrocompatibilité
+    } catch {
+      return ["06:30"];
+    }
+  });
+  // Jours actifs (0=Dimanche..6=Samedi)
+  const [notifyDays, setNotifyDays] = useState<number[]>(() => {
+    try {
+      const raw = localStorage.getItem("habit.app.notifyDays");
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr) && arr.every((n) => typeof n === "number"))
+          return arr;
+      }
+    } catch (e) {
+      console.warn("[Rituos] Impossible de lire notifyDays", e);
+    }
+    return [0, 1, 2, 3, 4, 5, 6]; // par défaut tous les jours
+  });
 
   const [todayISO, setTodayISO] = useState<string>(
     new Date().toISOString().slice(0, 10)
@@ -84,8 +109,8 @@ const Index = () => {
       } catch (e) {
         console.warn("[Rituos] Impossible d'enregistrer lastDayToast", e);
       }
-      // Si l'heure configurée est 00:00, on pop à minuit; sinon, on attend le scheduler de l'heure personnalisée
-      if (notifyTime === "00:00") {
+      // Si une des heures configurées est 00:00, on pop à minuit; sinon, on attend le scheduler
+      if (notifyTimes.includes("00:00")) {
         if (
           notifyOnLoad &&
           typeof Notification !== "undefined" &&
@@ -105,14 +130,23 @@ const Index = () => {
         });
       }
     }
-  }, [todayISO, notifyOnLoad, notifyTime, habits, sendReminders, toast]);
+  }, [todayISO, notifyOnLoad, notifyTimes, habits, sendReminders, toast]);
 
-  // Scheduler: pop à l'heure configurée (locale), une fois par jour
-  const lastDailyAlertRef = useRef<string | null>(
-    (typeof window !== "undefined" &&
-      localStorage.getItem("habit.app.lastDailyAlertDate")) ||
-      null
-  );
+  // Scheduler: pop aux heures configurées (locales), selon jours actifs, une fois par jour et par heure
+  const lastDailyAlertMapRef = useRef<Record<string, string>>({});
+  if (
+    typeof window !== "undefined" &&
+    Object.keys(lastDailyAlertMapRef.current).length === 0
+  ) {
+    try {
+      const raw = localStorage.getItem("habit.app.lastDailyAlertMap");
+      lastDailyAlertMapRef.current = raw
+        ? (JSON.parse(raw) as Record<string, string>)
+        : {};
+    } catch (e) {
+      console.warn("[Rituos] Impossible de lire lastDailyAlertMap", e);
+    }
+  }
   useEffect(() => {
     const tick = () => {
       const now = new Date();
@@ -120,41 +154,52 @@ const Index = () => {
       const mm = now.getMinutes().toString().padStart(2, "0");
       const current = `${hh}:${mm}`;
       const today = now.toISOString().slice(0, 10);
-      if (current === notifyTime && lastDailyAlertRef.current !== today) {
-        lastDailyAlertRef.current = today;
-        try {
-          localStorage.setItem("habit.app.lastDailyAlertDate", today);
-        } catch (e) {
-          console.warn(
-            "[Rituos] Impossible d'enregistrer lastDailyAlertDate",
-            e
-          );
+      // Si le jour n'est pas actif, on ne fait rien
+      const dayIdx = now.getDay();
+      if (!notifyDays.includes(dayIdx)) return;
+      // Pour chaque heure configurée, déclencher si match et non encore déclenchée aujourd'hui
+      for (const t of notifyTimes) {
+        if (t === current) {
+          const last = lastDailyAlertMapRef.current[t];
+          if (last !== today) {
+            lastDailyAlertMapRef.current[t] = today;
+            try {
+              localStorage.setItem(
+                "habit.app.lastDailyAlertMap",
+                JSON.stringify(lastDailyAlertMapRef.current)
+              );
+            } catch (e) {
+              console.warn(
+                "[Rituos] Impossible d'enregistrer lastDailyAlertMap",
+                e
+              );
+            }
+            if (
+              notifyOnLoad &&
+              typeof Notification !== "undefined" &&
+              Notification.permission === "granted"
+            ) {
+              sendReminders();
+            }
+            const due = habits.filter(
+              (h) => h.isDueOn?.(today) && !h.isCompletedOn?.(today)
+            ).length;
+            toast({
+              title: t === "00:00" ? "Nouvelle journée" : "Rappel quotidien",
+              description:
+                due > 0
+                  ? `${due} habitudes à accomplir aujourd'hui.`
+                  : "Aucune habitude due aujourd'hui.",
+            });
+          }
         }
-        // Envoi des rappels si activé
-        if (
-          notifyOnLoad &&
-          typeof Notification !== "undefined" &&
-          Notification.permission === "granted"
-        ) {
-          sendReminders();
-        }
-        const due = habits.filter(
-          (h) => h.isDueOn?.(today) && !h.isCompletedOn?.(today)
-        ).length;
-        toast({
-          title: "Nouvelle journée",
-          description:
-            due > 0
-              ? `${due} habitudes à accomplir aujourd'hui.`
-              : "Aucune habitude due aujourd'hui.",
-        });
       }
     };
     const id = setInterval(tick, 15 * 1000); // vérif toutes les 15s
     // tick immédiat au montage pour gérer les reloads proches de l'heure
     tick();
     return () => clearInterval(id);
-  }, [notifyTime, notifyOnLoad, sendReminders, habits, toast]);
+  }, [notifyTimes, notifyDays, notifyOnLoad, sendReminders, habits, toast]);
   // Inclure toutes les habitudes dues aujourd'hui, même si déjà complétées
   const dueToday = useMemo(
     () => habits.filter((h) => h.isDueOn(todayISO)),
@@ -189,6 +234,27 @@ const Index = () => {
   const [openAddCategory, setOpenAddCategory] = useState(false);
   const [openQuickDrawer, setOpenQuickDrawer] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  // Filtre d'affichage: mémorisé (par défaut: Toutes)
+  const [showAllHabits, setShowAllHabits] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem("habit.app.showAllHabits");
+      if (raw !== null) return raw === "1";
+    } catch (e) {
+      console.warn("[Rituos] lecture showAllHabits échouée", e);
+    }
+    return true;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "habit.app.showAllHabits",
+        showAllHabits ? "1" : "0"
+      );
+    } catch (e) {
+      console.warn("[Rituos] écriture showAllHabits échouée", e);
+    }
+  }, [showAllHabits]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -303,14 +369,61 @@ const Index = () => {
             </Card>
           )}
 
-          {/* Habits Grid (due today) */}
+          {/* Vue habitudes: Aujourd'hui / Toutes */}
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              {showAllHabits
+                ? "Toutes les habitudes"
+                : "Habitudes dues aujourd'hui"}
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span>Aujourd'hui</span>
+              <Switch
+                checked={!showAllHabits}
+                onCheckedChange={(v) => setShowAllHabits(!v)}
+              />
+            </div>
+          </div>
+
+          {/* Message d'état si aucune habitude due aujourd'hui */}
+          {!showAllHabits && dueToday.length === 0 && (
+            <Card className="border-dashed">
+              <CardContent className="py-6 text-sm text-muted-foreground flex items-center justify-between">
+                <span>Aucune habitude due aujourd'hui.</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowAllHabits(true)}
+                >
+                  Afficher toutes
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Habits Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {dueToday.map((h) => (
+            {(() => {
+              const base = showAllHabits ? [...habits] : [...dueToday];
+              // Tri: dues d'abord (incomplètes avant complétées), puis non dues
+              const key = (h: (typeof habits)[number]) => {
+                const due = h.isDueOn(todayISO);
+                const completed = h.isCompletedOn(todayISO);
+                return showAllHabits
+                  ? `${due ? "0" : "1"}-${
+                      completed ? "1" : "0"
+                    }-${h.name.toLowerCase()}`
+                  : `${completed ? "1" : "0"}-${h.name.toLowerCase()}`;
+              };
+              base.sort((a, b) => key(a).localeCompare(key(b)));
+              return base;
+            })().map((h) => (
               <HabitCard
                 key={h.id}
                 id={h.id}
                 name={h.name}
                 initialProgress={h.isCompletedOn(todayISO) ? 100 : 0}
+                isDueToday={h.isDueOn(todayISO)}
                 onProgressUpdate={() => toggleHabitToday(h.id)}
               />
             ))}
@@ -387,25 +500,133 @@ const Index = () => {
                   Envoyer les rappels
                 </Button>
               </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Heure de rappel</p>
-                <input
-                  type="time"
-                  value={notifyTime}
-                  onChange={(e) => {
-                    const v = e.target.value || "06:30";
-                    setNotifyTime(v);
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Heures de rappel
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {notifyTimes.map((t) => (
+                    <span
+                      key={t}
+                      className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs"
+                    >
+                      {t}
+                      <button
+                        aria-label={`Supprimer ${t}`}
+                        className="ml-1 rounded px-1 hover:bg-muted"
+                        onClick={() => {
+                          const next = notifyTimes.filter((x) => x !== t);
+                          setNotifyTimes(next);
+                          try {
+                            localStorage.setItem(
+                              "habit.app.notifyTimes",
+                              JSON.stringify(next)
+                            );
+                          } catch (e) {
+                            console.warn(
+                              "[Rituos] Impossible d'enregistrer notifyTimes",
+                              e
+                            );
+                          }
+                        }}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="time"
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (!v) return;
+                      if (!notifyTimes.includes(v)) {
+                        const next = [...notifyTimes, v].sort();
+                        setNotifyTimes(next);
+                        try {
+                          localStorage.setItem(
+                            "habit.app.notifyTimes",
+                            JSON.stringify(next)
+                          );
+                        } catch (e) {
+                          console.warn(
+                            "[Rituos] Impossible d'enregistrer notifyTimes",
+                            e
+                          );
+                        }
+                      }
+                    }}
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      // Ajouter une heure par défaut si rien n'a été choisi (sécurité)
+                      if (notifyTimes.length === 0) {
+                        const next = ["06:30"];
+                        setNotifyTimes(next);
+                        try {
+                          localStorage.setItem(
+                            "habit.app.notifyTimes",
+                            JSON.stringify(next)
+                          );
+                        } catch (e) {
+                          console.warn(
+                            "[Rituos] Impossible d'enregistrer notifyTimes",
+                            e
+                          );
+                        }
+                      }
+                    }}
+                  >
+                    Ajouter
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Jours actifs</p>
+                {(() => {
+                  const labels = ["Di", "Lu", "Ma", "Me", "Je", "Ve", "Sa"]; // 0..6
+                  const toggle = (idx: number) => {
+                    const next = notifyDays.includes(idx)
+                      ? notifyDays.filter((d) => d !== idx)
+                      : [...notifyDays, idx].sort();
+                    setNotifyDays(next);
                     try {
-                      localStorage.setItem("habit.app.notifyTime", v);
+                      localStorage.setItem(
+                        "habit.app.notifyDays",
+                        JSON.stringify(next)
+                      );
                     } catch (e) {
                       console.warn(
-                        "[Rituos] Impossible d'enregistrer notifyTime",
+                        "[Rituos] Impossible d'enregistrer notifyDays",
                         e
                       );
                     }
-                  }}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                />
+                  };
+                  return (
+                    <div className="grid grid-cols-7 gap-1">
+                      {labels.map((lab, i) => {
+                        const active = notifyDays.includes(i);
+                        return (
+                          <button
+                            key={lab}
+                            type="button"
+                            onClick={() => toggle(i)}
+                            className={`h-8 rounded-md text-xs border ${
+                              active
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-background text-foreground hover:bg-muted"
+                            }`}
+                          >
+                            {lab}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Switch
