@@ -1,4 +1,5 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useMemo } from 'react'
 
 interface ProgressChartProps {
   habits: Array<{ id: string; name: string; progress: number }>;
@@ -23,22 +24,40 @@ const ProgressChart = ({ habits }: ProgressChartProps) => {
     });
   };
 
-  const data = generateWeekData();
+  const data = useMemo(() => {
+    const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+    return days.map((day, index) => {
+      const averageProgress = habits.reduce((sum, habit) => {
+        const variation = Math.random() * 20 - 10
+        const dayProgress = Math.max(0, Math.min(100, habit.progress + variation - (6 - index) * 5))
+        return sum + dayProgress
+      }, 0) / Math.max(1, habits.length)
+      return { day, progress: Math.round(averageProgress) }
+    })
+  }, [habits])
 
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-          <XAxis 
-            dataKey="day" 
-            className="text-muted-foreground"
+        <LineChart data={data} margin={{ top: 8, right: 12, bottom: 8, left: 8 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+          <XAxis
+            dataKey="day"
+            tickMargin={8}
+            axisLine={false}
+            tickLine={false}
+            padding={{ left: 8, right: 8 }}
+            stroke={'hsl(var(--muted-foreground))'}
             fontSize={12}
           />
-          <YAxis 
-            className="text-muted-foreground"
-            fontSize={12}
+          <YAxis
             domain={[0, 100]}
+            width={36}
+            tickMargin={8}
+            axisLine={false}
+            tickLine={false}
+            stroke={'hsl(var(--muted-foreground))'}
+            fontSize={12}
           />
           <Tooltip 
             contentStyle={{

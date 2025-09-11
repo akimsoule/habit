@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* MyHabits Design System - Modern productivity app palette */
+/* Rituo Design System - Modern productivity app palette */
 
 @layer base {
   :root {
@@ -37,9 +37,9 @@
     --muted: 214 32% 91%;
     --muted-foreground: 215 13% 65%;
 
-    /* Accent */
-    --accent: 214 32% 91%;
-    --accent-foreground: 215 25% 15%;
+    /* Accent (light) — léger violet pour les surbrillances */
+    --accent: 262 100% 96%;
+    --accent-foreground: 262 83% 20%;
 
     /* Destructive */
     --destructive: 0 84% 60%;
@@ -51,9 +51,25 @@
     --ring: 217 91% 60%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 91% 70%));
-    --gradient-success: linear-gradient(135deg, hsl(158 64% 52%), hsl(158 64% 62%));
-    --gradient-subtle: linear-gradient(180deg, hsl(210 20% 98%), hsl(214 32% 96%));
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(217 91% 60%),
+      hsl(217 91% 70%)
+    );
+    --gradient-success: linear-gradient(
+      135deg,
+      hsl(158 64% 52%),
+      hsl(158 64% 62%)
+    );
+    --gradient-subtle: linear-gradient(
+      180deg,
+      hsl(210 20% 98%),
+      hsl(214 32% 96%)
+    );
+
+    /* Hero header gradient (light) */
+    --hero-from: var(--primary);
+    --hero-to: var(--primary);
 
     /* Shadows */
     --shadow-soft: 0 2px 8px -2px hsl(217 91% 60% / 0.1);
@@ -91,9 +107,10 @@
     --popover: 215 28% 12%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217 91% 60%;
+    /* Switch blue accents to violet in dark theme */
+    --primary: 262 83% 58%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 217 91% 55%;
+    --primary-hover: 262 83% 54%;
 
     --success: 158 64% 52%;
     --success-foreground: 0 0% 100%;
@@ -105,23 +122,39 @@
     --muted: 215 28% 18%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 215 28% 18%;
-    --accent-foreground: 210 40% 98%;
+    /* Accent (dark) — violet assombri pour un bon contraste */
+    --accent: 262 60% 24%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 215 28% 18%;
     --input: 215 28% 18%;
-    --ring: 217 91% 60%;
+    --ring: 262 83% 58%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 262 83% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 262 83% 58%;
+
+    /* Primary gradient/shadows tuned to violet in dark theme */
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(262 83% 58%),
+      hsl(276 80% 55%)
+    );
+    --shadow-soft: 0 2px 8px -2px hsl(262 83% 58% / 0.1);
+    --shadow-card: 0 4px 12px -2px hsl(262 83% 58% / 0.08);
+    --shadow-floating: 0 8px 25px -5px hsl(262 83% 58% / 0.15);
+
+    /* Hero header gradient (dark) - distinct from primary */
+    /* Violet gradient in dark mode for hero */
+    --hero-from: 262 83% 58%;
+    --hero-to: 276 80% 55%;
   }
 }
 
@@ -160,8 +193,13 @@
   }
 
   @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-4px); }
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-4px);
+    }
   }
 
   /* Button variants */
@@ -177,15 +215,34 @@
 
   /* Celebration animations */
   @keyframes bounce-celebration {
-    0%, 20%, 50%, 80%, 100% { transform: translateY(0) scale(1); }
-    40% { transform: translateY(-10px) scale(1.1); }
-    60% { transform: translateY(-5px) scale(1.05); }
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+      transform: translateY(0) scale(1);
+    }
+    40% {
+      transform: translateY(-10px) scale(1.1);
+    }
+    60% {
+      transform: translateY(-5px) scale(1.05);
+    }
   }
 
   @keyframes pulse-badge {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.2); opacity: 0.8; }
-    100% { transform: scale(1); opacity: 1; }
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
   }
 
   .celebration-bounce {
