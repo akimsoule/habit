@@ -94,7 +94,7 @@ const Index = () => {
       <Header onOpenQuickActions={() => setOpenQuickDrawer(true)} />
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="max-w-6xl mx-auto space-y-8">
+        <div className="space-y-8">
           {/* Hero stats header */}
           <StatsHero />
 
