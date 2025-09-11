@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import Header from "@/components/Header";
 import HabitCard from "@/components/HabitCard";
 import FloatingAddButton from "@/components/FloatingAddButton";
@@ -52,8 +52,14 @@ const Index = () => {
   const [notifyOnLoad, setNotifyOnLoad] = useState<boolean>(
     () => localStorage.getItem("habit.app.notifyOnLoad") === "1"
   );
+  // Heure de rappel quotidien (HH:MM, 24h)
+  const [notifyTime, setNotifyTime] = useState<string>(
+    () => localStorage.getItem("habit.app.notifyTime") || "06:30"
+  );
 
-  const [todayISO, setTodayISO] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [todayISO, setTodayISO] = useState<string>(
+    new Date().toISOString().slice(0, 10)
+  );
   // Tick à minuit pour rafraîchir la date du jour (réactivation auto)
   useEffect(() => {
     const interval = setInterval(() => {
@@ -62,6 +68,93 @@ const Index = () => {
     }, 60 * 1000); // vérif min
     return () => clearInterval(interval);
   }, []);
+
+  // Pop d'alerte en début de journée + rappels si activés
+  const lastDayToastRef = useRef<string>(
+    (typeof window !== "undefined" &&
+      localStorage.getItem("habit.app.lastDayToast")) ||
+      new Date().toISOString().slice(0, 10)
+  );
+  useEffect(() => {
+    // Ne déclenche que lorsqu'on passe à une nouvelle journée (app ouverte)
+    if (todayISO !== lastDayToastRef.current) {
+      lastDayToastRef.current = todayISO;
+      try {
+        localStorage.setItem("habit.app.lastDayToast", todayISO);
+      } catch (e) {
+        console.warn("[Rituos] Impossible d'enregistrer lastDayToast", e);
+      }
+      // Si l'heure configurée est 00:00, on pop à minuit; sinon, on attend le scheduler de l'heure personnalisée
+      if (notifyTime === "00:00") {
+        if (
+          notifyOnLoad &&
+          typeof Notification !== "undefined" &&
+          Notification.permission === "granted"
+        ) {
+          sendReminders();
+        }
+        const due = habits.filter(
+          (h) => h.isDueOn?.(todayISO) && !h.isCompletedOn?.(todayISO)
+        ).length;
+        toast({
+          title: "Nouvelle journée",
+          description:
+            due > 0
+              ? `${due} habitudes à accomplir aujourd'hui.`
+              : "Aucune habitude due aujourd'hui.",
+        });
+      }
+    }
+  }, [todayISO, notifyOnLoad, notifyTime, habits, sendReminders, toast]);
+
+  // Scheduler: pop à l'heure configurée (locale), une fois par jour
+  const lastDailyAlertRef = useRef<string | null>(
+    (typeof window !== "undefined" &&
+      localStorage.getItem("habit.app.lastDailyAlertDate")) ||
+      null
+  );
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      const hh = now.getHours().toString().padStart(2, "0");
+      const mm = now.getMinutes().toString().padStart(2, "0");
+      const current = `${hh}:${mm}`;
+      const today = now.toISOString().slice(0, 10);
+      if (current === notifyTime && lastDailyAlertRef.current !== today) {
+        lastDailyAlertRef.current = today;
+        try {
+          localStorage.setItem("habit.app.lastDailyAlertDate", today);
+        } catch (e) {
+          console.warn(
+            "[Rituos] Impossible d'enregistrer lastDailyAlertDate",
+            e
+          );
+        }
+        // Envoi des rappels si activé
+        if (
+          notifyOnLoad &&
+          typeof Notification !== "undefined" &&
+          Notification.permission === "granted"
+        ) {
+          sendReminders();
+        }
+        const due = habits.filter(
+          (h) => h.isDueOn?.(today) && !h.isCompletedOn?.(today)
+        ).length;
+        toast({
+          title: "Nouvelle journée",
+          description:
+            due > 0
+              ? `${due} habitudes à accomplir aujourd'hui.`
+              : "Aucune habitude due aujourd'hui.",
+        });
+      }
+    };
+    const id = setInterval(tick, 15 * 1000); // vérif toutes les 15s
+    // tick immédiat au montage pour gérer les reloads proches de l'heure
+    tick();
+    return () => clearInterval(id);
+  }, [notifyTime, notifyOnLoad, sendReminders, habits, toast]);
   // Inclure toutes les habitudes dues aujourd'hui, même si déjà complétées
   const dueToday = useMemo(
     () => habits.filter((h) => h.isDueOn(todayISO)),
@@ -76,7 +169,9 @@ const Index = () => {
       0
     ) / Math.max(1, habits.length)
   );
-  const completedHabits = dueToday.filter((h) => h.isCompletedOn(todayISO)).length;
+  const completedHabits = dueToday.filter((h) =>
+    h.isCompletedOn(todayISO)
+  ).length;
 
   const askNotifications = async () => {
     const perm = await requestNotifications();
@@ -291,6 +386,26 @@ const Index = () => {
                 >
                   Envoyer les rappels
                 </Button>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Heure de rappel</p>
+                <input
+                  type="time"
+                  value={notifyTime}
+                  onChange={(e) => {
+                    const v = e.target.value || "06:30";
+                    setNotifyTime(v);
+                    try {
+                      localStorage.setItem("habit.app.notifyTime", v);
+                    } catch (e) {
+                      console.warn(
+                        "[Rituos] Impossible d'enregistrer notifyTime",
+                        e
+                      );
+                    }
+                  }}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                />
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Switch
