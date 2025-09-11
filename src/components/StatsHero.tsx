@@ -82,43 +82,45 @@ export default function StatsHero() {
   const todayPct = dueCount > 0 ? Math.round((doneCount / dueCount) * 100) : 0;
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-2xl p-6 sm:p-8 text-primary-foreground bg-gradient-to-br from-[hsl(var(--hero-from))] to-[hsl(var(--hero-to))] shadow-lg">
+    <div className="space-y-2.5 sm:space-y-4">
+      <div className="rounded-lg p-3 sm:rounded-2xl sm:p-8 text-primary-foreground bg-gradient-to-br from-[hsl(var(--hero-from))] to-[hsl(var(--hero-to))] shadow-lg">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-3xl sm:text-4xl font-bold">Bonjour ! 👋</h2>
-            <p className="opacity-90 mt-1 text-lg">Niveau {level}</p>
+            <h2 className="hidden sm:block text-4xl font-bold">Bonjour ! 👋</h2>
+            <p className="block sm:hidden opacity-90 text-[11px] mt-0.5">Niv. {level}</p>
+            <p className="hidden sm:block opacity-90 mt-1 text-lg">Niveau {level}</p>
           </div>
-          <div className="flex items-center gap-2 text-right">
-            <Trophy className="w-5 h-5 opacity-90" />
+          <div className="flex items-center gap-1 sm:gap-2 text-right">
+            <Trophy className="w-3.5 h-3.5 sm:w-5 sm:h-5 opacity-90" />
             <div className="leading-tight">
-              <div className="text-xl font-semibold">{xpTotal}</div>
-              <div className="text-xs opacity-90">XP</div>
+              <div className="text-sm sm:text-xl font-semibold">{xpTotal}</div>
+              <div className="text-[10px] sm:text-xs opacity-90">XP</div>
             </div>
           </div>
         </div>
 
-        <div className="mt-6">
-          <div className="flex items-center justify-between text-sm opacity-90 mb-2">
+        <div className="mt-3 sm:mt-6">
+          <div className="hidden sm:flex items-center justify-between text-sm opacity-90 mb-2">
             <span>Progression niveau</span>
             <span>{xpRemaining} XP restants</span>
           </div>
-          <div className="h-3 w-full rounded-full bg-primary-foreground/20 overflow-hidden">
+          <div className="h-1 sm:h-3 w-full rounded-full bg-primary-foreground/20 overflow-hidden">
             <div
               className="h-full bg-primary-foreground rounded-full"
               style={{ width: `${levelPct}%` }}
             />
           </div>
+          <div className="mt-1 text-[10px] opacity-75 sm:hidden">{levelPct}% · {xpRemaining} XP restants</div>
         </div>
 
-        <div className="mt-6 p-4 rounded-xl bg-primary-foreground/10">
+        <div className="mt-3 sm:mt-6 p-2 sm:p-4 rounded-lg sm:rounded-xl bg-primary-foreground/10">
           <div className="flex items-center justify-between text-primary-foreground">
-            <span className="font-medium">Aujourd'hui</span>
-            <span className="text-lg font-semibold">
+            <span className="font-medium text-xs sm:text-sm">Aujourd'hui</span>
+            <span className="text-sm sm:text-lg font-semibold">
               {doneCount}/{dueCount}
             </span>
           </div>
-          <div className="mt-2 h-2 w-full rounded-full bg-primary-foreground/20 overflow-hidden">
+          <div className="mt-1.5 sm:mt-2 h-1 sm:h-2 w-full rounded-full bg-primary-foreground/20 overflow-hidden">
             <div
               className="h-full bg-primary-foreground rounded-full"
               style={{ width: `${todayPct}%` }}
@@ -127,7 +129,33 @@ export default function StatsHero() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Grille compacte mobile */}
+      <div className="grid grid-cols-3 gap-1.5 sm:hidden">
+        <div className="rounded-md p-1.5 border bg-card text-card-foreground">
+          <div className="flex items-center justify-between">
+            <Flame className="w-3.5 h-3.5 text-primary" />
+            <div className="text-base font-semibold">{longestStreak}</div>
+          </div>
+          <div className="mt-0.5 text-[10px] text-muted-foreground">Série</div>
+        </div>
+        <div className="rounded-md p-1.5 border bg-card text-card-foreground">
+          <div className="flex items-center justify-between">
+            <Target className="w-3.5 h-3.5 text-primary" />
+            <div className="text-base font-semibold">{totalSuccess}</div>
+          </div>
+          <div className="mt-0.5 text-[10px] text-muted-foreground">Succès</div>
+        </div>
+        <div className="rounded-md p-1.5 border bg-card text-card-foreground">
+          <div className="flex items-center justify-between">
+            <Medal className="w-3.5 h-3.5 text-primary" />
+            <div className="text-base font-semibold">{level}</div>
+          </div>
+          <div className="mt-0.5 text-[10px] text-muted-foreground">Niveau</div>
+        </div>
+      </div>
+
+      {/* Grille originale pour ≥ sm */}
+      <div className="hidden sm:grid grid-cols-3 gap-4">
         <div className="rounded-2xl p-4 border bg-card text-card-foreground">
           <div className="flex items-center gap-2">
             <Flame className="w-5 h-5 text-primary" />

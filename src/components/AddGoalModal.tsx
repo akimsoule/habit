@@ -87,7 +87,7 @@ export default function AddGoalModal({ open, onOpenChange }: Props) {
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Faire venir ma femme (2 ans)"
+              placeholder="Ex: Obtenir une certification professionnelle (2 ans)"
             />
           </div>
 
