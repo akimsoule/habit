@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Header from "@/components/Header";
 import HabitCard from "@/components/HabitCard";
 import FloatingAddButton from "@/components/FloatingAddButton";
@@ -53,10 +53,18 @@ const Index = () => {
     () => localStorage.getItem("habit.app.notifyOnLoad") === "1"
   );
 
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const [todayISO, setTodayISO] = useState<string>(new Date().toISOString().slice(0, 10));
+  // Tick à minuit pour rafraîchir la date du jour (réactivation auto)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date().toISOString().slice(0, 10);
+      setTodayISO((prev) => (prev !== now ? now : prev));
+    }, 60 * 1000); // vérif min
+    return () => clearInterval(interval);
+  }, []);
+  // Inclure toutes les habitudes dues aujourd'hui, même si déjà complétées
   const dueToday = useMemo(
-    () =>
-      habits.filter((h) => h.isDueOn(todayISO) && !h.isCompletedOn(todayISO)),
+    () => habits.filter((h) => h.isDueOn(todayISO)),
     [habits, todayISO]
   );
   const nearest = manager.getNearestDueDateProgress(todayISO, todayISO);
@@ -68,9 +76,7 @@ const Index = () => {
       0
     ) / Math.max(1, habits.length)
   );
-  const completedHabits = dueToday.filter((h) =>
-    h.isCompletedOn(todayISO)
-  ).length;
+  const completedHabits = dueToday.filter((h) => h.isCompletedOn(todayISO)).length;
 
   const askNotifications = async () => {
     const perm = await requestNotifications();
@@ -179,15 +185,25 @@ const Index = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ProgressChart
-                  habits={habits.map((h) => ({
-                    id: h.id,
-                    name: h.name,
-                    progress: Math.round(
-                      h.getProgress(todayISO, todayISO) * 100
-                    ),
-                  }))}
-                />
+                {(() => {
+                  const today = new Date(todayISO);
+                  const yesterday = new Date(today);
+                  yesterday.setDate(today.getDate() - 1);
+                  const weekStart = new Date(today);
+                  weekStart.setDate(today.getDate() - 6);
+                  const yISO = yesterday.toISOString().slice(0, 10);
+                  const wsISO = weekStart.toISOString().slice(0, 10);
+                  return (
+                    <ProgressChart
+                      habits={habits.map((h) => ({
+                        id: h.id,
+                        name: h.name,
+                        // Exclure la journée en cours du calcul
+                        progress: Math.round(h.getProgress(wsISO, yISO) * 100),
+                      }))}
+                    />
+                  );
+                })()}
               </CardContent>
             </Card>
           )}

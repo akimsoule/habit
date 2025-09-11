@@ -40,6 +40,10 @@ export type HabitAppContextValue = {
   saveSnapshot: () => void;
   requestNotifications: () => Promise<NotificationPermission>;
   sendReminders: () => void;
+  /** Assigne ou change la catégorie d'une habitude existante */
+  setHabitCategory: (habitId: string, categoryId?: string) => void;
+  /** Ajoute une habitude à un objectif existant */
+  addHabitToGoal: (goalId: string, habitId: string) => void;
   /**
    * Réinitialise toutes les données de l'application stockées en local.
    * Supprime les clés localStorage commençant par "habit.app." et
