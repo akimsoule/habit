@@ -1,4 +1,4 @@
-## Rituo
+## Rituos
 Rituels simples, progrès durables.
 
 Application de suivi d’habitudes (React + Vite + TypeScript + shadcn/ui + Tailwind) utilisant la librairie `habit.app`.

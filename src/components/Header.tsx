@@ -16,7 +16,7 @@ const Header = ({ onOpenQuickActions }: Props) => {
             <div className="h-8 w-8 rounded-md bg-white dark:bg-white ring-1 ring-border overflow-hidden flex items-center justify-center">
               <img
                 src="/logo.png"
-                alt="Rituo logo"
+                alt="Rituos logo"
                 className="h-6 w-6 object-contain"
                 width={24}
                 height={24}
@@ -25,7 +25,7 @@ const Header = ({ onOpenQuickActions }: Props) => {
               />
             </div>
             <div className="flex flex-col leading-tight">
-              <h1 className="text-xl font-bold text-foreground">Rituo</h1>
+              <h1 className="text-xl font-bold text-foreground">Rituos</h1>
               <span className="text-xs text-muted-foreground hidden sm:block">
                 Rituels simples, progrès durables
               </span>
