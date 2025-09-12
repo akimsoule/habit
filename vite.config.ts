@@ -24,11 +24,20 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes("node_modules")) {
-            if (id.includes("react") || id.includes("scheduler")) return "vendor-react";
-            if (id.includes("@radix-ui") || id.includes("@tanstack")) return "vendor-ui";
-            if (id.includes("habit.app")) return "vendor-habit-app";
-            return "vendor";
+          if (id.includes('node_modules')) {
+            // React et dépendances core doivent être chargées en premier
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor-react';
+            }
+            // UI components qui dépendent de React
+            if (id.includes('@radix-ui')) {
+              return 'vendor-ui';
+            }
+            // Notre app de gestion d'habitudes
+            if (id.includes('habit.app')) {
+              return 'vendor-app';
+            }
+            return 'vendor';
           }
         },
       },
