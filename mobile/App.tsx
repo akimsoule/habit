@@ -1,10 +1,21 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View, StatusBar } from 'react-native';
+import { HabitAppProvider } from './src/providers/HabitAppProvider';
+import { ThemeProvider } from './src/providers/ThemeProvider';
+import { ToastProvider } from './src/providers/ToastProvider';
+import { HomeScreen } from './src/components/HomeScreen';
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-    </View>
+    <ThemeProvider>
+      <HabitAppProvider>
+        <ToastProvider>
+          <View style={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+            <HomeScreen />
+          </View>
+        </ToastProvider>
+      </HabitAppProvider>
+    </ThemeProvider>
   );
 }
 
@@ -12,7 +23,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
