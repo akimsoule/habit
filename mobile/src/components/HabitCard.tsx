@@ -8,12 +8,13 @@ import {
   Pressable,
   Alert,
   TextInput,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { Habit } from "habit.app";
 import { useHabitApp } from "../providers/useHabitApp";
 import { useTheme } from "../providers/useTheme";
-export function HabitCard({ habit }: { habit: Habit }) {
+function HabitCardBase({ habit }: { habit: Habit }) {
   // Handlers pour chaque action du menu
   const { renameHabit, setHabitDescription } = useHabitApp();
   const [editModal, setEditModal] = useState<null | "name" | "desc">(null);
@@ -231,6 +232,8 @@ export function HabitCard({ habit }: { habit: Habit }) {
   );
 }
 // --- Styles à la fin du fichier ---
+export const HabitCard = React.memo(HabitCardBase);
+
 const styles = StyleSheet.create({
   menuOverlay: {
     flex: 1,
@@ -276,6 +279,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    // Web fallback
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }
+      : {}),
   },
   rowTop: {
     flexDirection: "row",

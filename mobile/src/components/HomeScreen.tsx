@@ -107,12 +107,16 @@ export function HomeScreen() {
       </View>
 
       {/* Liste des habitudes */}
-      <FlatList
-        data={filter === "today" ? dueHabits : [...dueHabits, ...otherHabits]}
-        renderItem={({ item: habit }) => <HabitCard habit={habit} />}
-        keyExtractor={(habit) => habit.id}
+            <FlatList
+        data={filter === "today" ? dueHabits : otherHabits}
+        renderItem={({ item }) => <HabitCard habit={item} />}
+        keyExtractor={(item) => item.id}
         style={styles.list}
-        contentContainerStyle={styles.listContent}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        initialNumToRender={8}
+        onEndReachedThreshold={0.5}
+        removeClippedSubviews={true}
       />
 
       {/* Bouton d'ajout */}

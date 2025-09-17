@@ -14,6 +14,7 @@ import {
 import { NotificationService } from "../services/notification.service";
 import { HabitAppContext } from "./habitContext";
 import { InMemoryHabitRepository } from "habit.app";
+import { errorService } from "../services/error.service";
 
 export function HabitAppProvider({ children }: { children: React.ReactNode }) {
   const [storage] = useState(() => new AsyncStorageService());
@@ -42,7 +43,10 @@ export function HabitAppProvider({ children }: { children: React.ReactNode }) {
         }
         updateState();
       } catch (error) {
-        console.error("Erreur lors du chargement des données:", error);
+        errorService.log('error', "Erreur lors du chargement des données", error as Error, {
+          component: 'HabitAppProvider',
+          action: 'loadData'
+        });
       }
     };
 

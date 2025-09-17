@@ -5,6 +5,10 @@ import { Habit } from 'habit.app';
 
 export class NotificationService {
   async requestPermissions(): Promise<boolean> {
+    if (Platform.OS === 'web') {
+      // Web: pas de permission push native => on ignore silencieusement
+      return true;
+    }
     if (Platform.OS === 'android') {
       // Android ne nécessite pas de permission explicite
       return true;
@@ -15,6 +19,7 @@ export class NotificationService {
   }
 
   sendReminder(habit: Habit): void {
+    if (Platform.OS === 'web') return; // no-op web
     // Programmer un rappel quotidien à 9h du matin par défaut
     const defaultTime = new Date();
     defaultTime.setHours(9, 0, 0, 0);
@@ -22,6 +27,7 @@ export class NotificationService {
   }
 
   async scheduleHabitReminder(habitId: string, habitName: string, time: Date) {
+    if (Platform.OS === 'web') return; // no-op web
     await Notifications.scheduleNotificationAsync({
       content: {
         title: 'Rappel d\'habitude',
@@ -38,6 +44,7 @@ export class NotificationService {
   }
 
   async cancelHabitReminder(habitId: string) {
+    if (Platform.OS === 'web') return; // no-op web
     const notifications = await Notifications.getAllScheduledNotificationsAsync();
     const notification = notifications.find(
       n => n.content.data?.habitId === habitId
@@ -48,6 +55,7 @@ export class NotificationService {
   }
 
   setupNotificationHandler() {
+    if (Platform.OS === 'web') return; // no-op web
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,
